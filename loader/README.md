@@ -56,7 +56,7 @@ If successful:
 
 ```bash
 $ ps aux | grep kworker
-root      1233  0.0  0.0   2196  1200 ?        Ss   13:47   0:00 [kworker/u!0]
+root      1233  0.0  0.0   2196  1200 ?        Ss   13:47   0:00 [kworker/0:1-events]
 root      1235  0.0  0.0   3040  1428 pts/2    S+   13:47   0:00 grep kworker
 $ cat /proc/1233/maps | grep memfd
 00400000-00401000 r-xp 00000000 00:01 1025                               /memfd:error (deleted)
