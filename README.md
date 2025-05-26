@@ -7,4 +7,4 @@ This repository contains a collection of red team utilities, scripts, and payloa
 
 | Tool/Folder               | Description |
 |---------------------------|-------------|
-| [`loader/`](loader/)      | A Linux fileless in-memory ELF loader using `memfd_create()`. Downloads a remote payload, runs it from memory, and deletes itself from disk. |
+| [`loader/`](loader/)      | A Linux fileless in-memory ELF loader using `memfd_create()`. Downloads a remote payload, runs it from memory, and deletes itself from disk. Simulates a Cobalt Strike stager. |
