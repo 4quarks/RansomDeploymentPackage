@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     }
 
     // Create anonymous memory-backed file
-    if ((fd = memfd_create(FD_NAME, MFD_CLOEXEC)) < 0) {
+    if ((fd = memfd_create(FD_NAME, 0)) < 0) {
         perror("memfd_create");
         close(sock);
         exit(EXIT_FAILURE);
