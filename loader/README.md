@@ -18,11 +18,16 @@ This tool implements a fileless, in-memory ELF loader for Linux systems. It conn
 Inside `loader.c`, you can configure the following parameters:
 
 ```c
-const char *C2_IP        = "127.0.0.1";       // C2 IP
-const int   C2_PORT      = 1111;              // C2 port
+const char *C2_IP        = "127.0.0.1";              // C2 IP
+const int   C2_PORT      = 1111;                     // C2 port
 const char *FAKE_PROC    = "[kworker/0:1-events]";   // Shown in `ps` output
-const char *FD_NAME      = "error";          // Shown in `cat /proc/<pid>/maps` as [memfd:error (deleted)]
+const char *FD_NAME      = "error";                  // Shown in `cat /proc/<pid>/maps` as `[memfd:error (deleted)]`
+const char *PROC_LINK    = "";                       // Detault empty. Shown in `cat /proc/<pid>/status` as `Name: <filename>`.
 ````
+
+You can choose between two execution workflows:
+1. **In-Memory Only (default)**: If `PROC_LINK` is left empty, the payload is injected and executed entirely from memory using `memfd_create()`. While this leaves no trace on disk, a side effect is that the process name shown in `/proc/<pid>/status` appears as a numeric string (e.g., `Name: <fd>`).
+2. **Temporary Symlink Execution**: If `PROC_LINK` is set, a short-lived symbolic link (\~1 second) is created pointing to the memory file descriptor (e.g., `/proc/self/fd/<fd>`). The payload is then executed via this symlink. This allows you to define a custom process name—ideally mimicking legitimate system processes like `kworker` or `rcu_sched`—to improve stealth. After execution, the symlink is unlinked to avoid leaving artifacts on disk. 
 
 ### Usage
 
