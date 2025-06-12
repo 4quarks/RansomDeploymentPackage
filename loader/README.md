@@ -37,8 +37,8 @@ You define all parameters in a `config.json` file. The Python builder script (`b
   "C2_IP": "127.0.0.1",
   "C2_PORT": 4444,
   "FAKE_PROC": "[kworker/u:1]",
-  "FD_NAME": "hidden",
-  "PROC_LINK": "",
+  "FD_NAME": "error",
+  "PROC_LINK": "/tmp/.kworker",
   "EXTRACT_PATH": "/tmp/payload.img",
   "MARKER": "ENCRYPTED_PAYLOAD"
 }
