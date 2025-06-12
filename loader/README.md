@@ -28,19 +28,19 @@ You define all parameters in a `config.json` file. The Python builder script (`b
 
 ```json
 {
-  "image": "input.png",
-  "binary": "payload.elf",
-  "password": "supersecret",
-  "output": "out.png",
   "loader": "loader.c",
-  "patched": "loader_patched.c",
-  "C2_IP": "192.168.1.10",
+  "loader_build": "loader_build.c",
+  "image": "original.png",
+  "payload": "payload.elf",
+  "image_payload": "encrypted.png",
+  "password": "encrypted",
+  "C2_IP": "127.0.0.1",
   "C2_PORT": 4444,
-  "FAKE_PROC": "[kworker/0:1-events]",
-  "FD_NAME": "error",
-  "PROC_LINK": "/tmp/.cache-update",
-  "EXTRACT_PATH": "/tmp/.hidden.png",
-  "marker": "ENCRYPTED_PAYLOAD"
+  "FAKE_PROC": "[kworker/u:1]",
+  "FD_NAME": "hidden",
+  "PROC_LINK": "",
+  "EXTRACT_PATH": "/tmp/payload.img",
+  "MARKER": "ENCRYPTED_PAYLOAD"
 }
 ```
 
