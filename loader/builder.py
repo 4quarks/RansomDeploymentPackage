@@ -64,6 +64,8 @@ def main():
         loader_code = loader_code.replace("__IV__", ', '.join(str(b) for b in iv))
 
     else:
+        loader_code = loader_code.replace("{__KEY__}", '{' + ', '.join(['0'] * 32) + '}')
+        loader_code = loader_code.replace("{__IV__}",  '{' + ', '.join(['0'] * 16) + '}')
         print(f"[*] Non encrypted payload!")
 
     replacements = {
@@ -81,7 +83,6 @@ def main():
             f.write(loader_code)
 
     print(f"[*] Patched loader written to: {patched_path}")
-
 
 if __name__ == "__main__":
     main()

