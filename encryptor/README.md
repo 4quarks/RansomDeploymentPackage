@@ -37,7 +37,7 @@ This repository contains a simulated Linux-based ransomware deployment package f
 openssl genpkey -algorithm RSA -out server_private.pem -pkeyopt rsa_keygen_bits:2048
 openssl rsa -pubout -in server_private.pem -out server_public.pem
 ```
-
+Replace the content of the variable SERVER_PUBLIC_KEY_PEM in `encryptor.py` with the public key generated server_public.pem 
 ### 1. Encrypt Files
 
 ```bash
