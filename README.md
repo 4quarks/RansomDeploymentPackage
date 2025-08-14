@@ -3,7 +3,7 @@ This repository contains a collection of red team utilities, scripts, and payloa
 
 > ⚠️ **For educational and authorized use only.** Do not use on systems you do not own or have explicit permission to operate on.
 
-## 📂 Tools Included
+## Tools Included
 
 | Tool | Description | MITRE ATT&CK Technique | References |
 |-------------|-------------|-------------|-------------|
