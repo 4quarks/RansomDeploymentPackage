@@ -64,7 +64,7 @@ def recv_exact(conn: socket.socket, num_bytes: int) -> bytes:
         buf.extend(chunk)
     return bytes(buf)
 
-def handle_connection(conn: socket.socket):
+def handle_connection(conn: socket.socket, recv_dir):
     # Reads a series of file transfers on the same TCP connection until the client closes
     while True:
         # Read the 4-byte frame tag. If we get EOF (no bytes), close connection
@@ -84,11 +84,11 @@ def handle_connection(conn: socket.socket):
 
         # Determine target filename and current offset (resume point)
         filename = safe_name(path)
-        filepath = os.path.join(RECV_DIR, filename)
+        filepath = os.path.join(recv_dir, filename)
         # Write mapping before transfer starts
         append_manifest(filename, path)
 
-        dest_path = os.path.join(RECV_DIR, filename)
+        dest_path = os.path.join(recv_dir, filename)
 
         # If a partial exists we continue appending at its current size
         offset = 0
@@ -171,7 +171,7 @@ def main():
             conn, addr = srv.accept()
             print(f"[COLLECTOR] Connection from {addr}")
             try:
-                handle_connection(conn)
+                handle_connection(conn, recv_dir)
             except Exception as e:
                 print(f"[COLLECTOR] Error: {e}")
             finally:
