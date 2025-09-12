@@ -305,7 +305,7 @@ def main():
     elif args.mode == "scan":
         run_scan_mode(args.dirs, args.ext_includes, args.min_mb, args.max_mb, args.excludes, args.pace_sec)
     elif args.mode == "queue":
-        run_queue_mode(args.path)
+        run_queue_mode(args.dirs)
 
 if __name__ == "__main__":
     main()
