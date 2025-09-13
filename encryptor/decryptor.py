@@ -105,7 +105,7 @@ def main():
         exit(1)
 
     print("Loading client private key...")
-    client_key = load_client_key(args.client_key, args.pwd.encode())
+    client_key = load_client_key(args.client_key, args.pwd.encode() if args.pwd else None)
 
     print("Starting decryption...")
     traverse_and_decrypt(args.path, client_key)
