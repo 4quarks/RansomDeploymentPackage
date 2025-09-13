@@ -29,9 +29,9 @@ EXTENSION = ".kontuz"  # Extension of the encrypted files
 CHUNK_SIZE = 100_000   # Size of AES-encrypted block
 
 # Load the client private key (decrypted already)
-def load_client_key(path):
+def load_client_key(path, password):
     with open(path, "rb") as f:
-        return serialization.load_pem_private_key(f.read(), password=None, backend=default_backend())
+        return serialization.load_pem_private_key(f.read(), password=password, backend=default_backend())
 
 # AES-CTR decryption
 def decrypt_chunk(data, key, nonce):
@@ -93,6 +93,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--client-key", required=True, help="Decrypted client RSA private key (PEM)")
     parser.add_argument("--path", required=True, help="Folder containing encrypted files")
+    parser.add_argument("--pwd", default=None, help="Password for RSA private key (if any)")
     args = parser.parse_args()
 
     if not Path(args.client_key).exists():
@@ -104,7 +105,7 @@ def main():
         exit(1)
 
     print("Loading client private key...")
-    client_key = load_client_key(args.client_key)
+    client_key = load_client_key(args.client_key, args.pwd.encode() if args.pwd else None)
 
     print("Starting decryption...")
     traverse_and_decrypt(args.path, client_key)
